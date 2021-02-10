@@ -1,0 +1,207 @@
+---
+title: "AMA-1 Technical Report"
+author: "Danyu Zhang, Daniel Alonso"
+date: "February 10th, 2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = TRUE,
+    collapse = TRUE,
+    comment = '#>',
+    fig.path = './figures/'
+)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(dplyr)
+library(MLmetrics)
+library(caret)
+library(MASS)
+library(stringr)
+library(ggplot2)
+library(fitdistrplus)
+```
+
+# Introduction
+
+Our objective is to determine which SNPs are related to concentration. SNPs are specific sections of genetic code transcribed to string format (i.e. *AGTGCTGATCGA*). 
+
+Here we have a preview of the dataset:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+gen <- read.csv("./data/gendata.csv", header=TRUE, sep=";")
+knitr::kable(
+    head(gen),
+    booktabs=TRUE,
+    caption="Genetic data",
+)
+gen <- gen[2:length(gen)]
+cols <- length(names(gen))
+gen <- sapply(gen, as.numeric)
+```
+
+The dataset contains the following variables:
+
+- **id**: refers to the ID of the individual who's genetic sequence was analyzed 
+- **conc**: concentration
+- **snp1** through **snp8**: specific sections of the genetic code analyzed (SNPs)
+
+# Basic exploratory data anaysis
+
+We will take a look at the data graphically in a very simple manner:
+
+## Distribution of *concentration*
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=4}
+par(mfrow=c(1,1))
+hist(gen[,1], main="concentration")
+```
+
+&nbsp;
+
+We can see that concentration approaches a normal distribution. It would be reasonable to attempt to fit it to a normal distribution:
+
+&nbsp;
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10, fig.height=5}
+plot(summary(fitdist(gen[,1],"norm")))
+```
+
+&nbsp;
+
+And we can see that yes, we can somewhat comfortably say that the concentration comes from a normal distribution.
+
+## Most dominant SNP values
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10, fig.height=7}
+par(mfrow=c(3,3))
+for (i in 2:cols) {
+    barplot(table(gen[,i]), main=str_interp("snp${i-1}"))
+}
+```
+
+&nbsp;
+
+As for the SNPs, we can see that the most dominant value for the SNPs is **2**, while for *snp1* and *snp2* the value **3** seems to be slightly more common than the value **1**.
+
+For the rest of the SNPs, **2** is the most common value, while **1** and **3** seem quite even.
+
+\newpage
+
+# Method
+
+We are going to use multiple regression using as predictors all other variables minus *conc* in order to predict our target variable which is *conc*, we expect to obtain numerical results as our problem is to predict concentration. 
+
+We can see that only the first and the second variables are significant by checking the p-values, additionaly, the mean squared error is around 26, which is acceptable. 
+
+\footnotesize
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+gen <- as.data.frame(gen)
+
+# Splitting dataset into train and test
+n=nrow(gen)
+set.seed(7)
+trainset=(1:n)%in%sample(n,floor(n*0.7)) 
+testset=!trainset 
+trainset=gen[trainset,]
+testset=gen[testset,]
+
+# Modelling
+model1 <- lm(conc ~ ., data = trainset)
+summary(model1)
+
+# Prediction and Metrics
+pred1 = predict(model1, testset)
+MSE(pred1, testset$conc)
+```
+
+\normalsize
+
+# Results
+
+Our most important variables to forecast concentration of protein in blood of corresponding individual are the genetic profiles "snp1" and "snp2", and all the other genetic profiles are useless in the sense to predict concentration of protein in blood. 
+
+Additionaly, genetic profiles "snp1" and "snp2" cause positive effects on the concentration of protein of the individual. Which means that, increasing genetic profiles "snp1" by 1 unit causes an increment on the concentration by 25 units; and 1 unit of increment on "snp2" produces 3.27 of increment on the concentration of protein in the blood. 
+
+The model works relatively well as it has mean squared error around 26. So we can use this model to predict the concentration of protein in the blood of corresponding individual. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+impo <- varImp(model1, scale=FALSE)
+knitr::kable(
+    impo,
+    booktabs=TRUE,
+    caption="Variable importance for each SNP",
+)
+```
+
+# Bibliography
+
+Statistical methods (either new or olds) must be linked to the statistical literature.
+
+# Appendix: Code
+
+Here goes the *literate programming* part.
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE, eval=FALSE}
+# importing libraries
+library(dplyr)
+library(MLmetrics)
+library(caret)
+library(MASS)
+library(stringr)
+library(ggplot2)
+library(fitdistrplus)
+
+# importing data
+gen <- read.csv("./data/gendata.csv", header=TRUE, sep=";")
+knitr::kable(
+    head(gen),
+    booktabs=TRUE,
+    caption="Genetic data",
+)
+gen <- gen[2:length(gen)]
+cols <- length(names(gen))
+gen <- sapply(gen, as.numeric)
+
+# concentration histogram
+par(mfrow=c(1,1))
+hist(gen[,1], main="concentration")
+
+# SNP plots
+par(mfrow=c(3,3))
+for (i in 2:cols) {
+    barplot(table(gen[,i]), main=str_interp("snp${i-1}"))
+}
+
+# converting gen to dataframe
+gen <- as.data.frame(gen)
+
+# Splitting dataset into train and test
+n=nrow(gen)
+set.seed(7)
+trainset=(1:n)%in%sample(n,floor(n*0.7)) 
+testset=!trainset 
+trainset=gen[trainset,]
+testset=gen[testset,]
+
+# Modelling
+model1 <- lm(conc ~ ., data = trainset)
+summary(model1)
+
+# Prediction and Metrics
+pred1 = predict(model1, testset)
+MSE(pred1, testset$conc)
+
+# variable importance plot
+impo <- varImp(model1, scale=FALSE)
+knitr::kable(
+    impo,
+    booktabs=TRUE,
+    caption="Variable importance for each SNP",
+)
+```
+
+

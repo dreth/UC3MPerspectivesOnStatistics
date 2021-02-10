@@ -1,0 +1,323 @@
+\PassOptionsToPackage{unicode=true}{hyperref} % options for packages loaded elsewhere
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provides euro and other symbols
+\else % if luatex or xelatex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage[]{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\usepackage{hyperref}
+\hypersetup{
+            pdftitle={AMA-1 Technical Report},
+            pdfauthor={Danyu Zhang, Daniel Alonso},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs}
+% Fix footnotes in tables (requires footnote package)
+\IfFileExists{footnote.sty}{\usepackage{footnote}\makesavenoteenv{longtable}}{}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+% set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+
+\title{AMA-1 Technical Report}
+\author{Danyu Zhang, Daniel Alonso}
+\date{February 10th, 2021}
+
+\begin{document}
+\maketitle
+
+\hypertarget{introduction}{%
+\section{Introduction}\label{introduction}}
+
+Our objective is to determine which SNPs are related to concentration.
+SNPs are specific sections of genetic code transcribed to string format
+(i.e. \emph{AGTGCTGATCGA}).
+
+Here we have a preview of the dataset:
+
+\begin{longtable}[]{@{}lrrrrrrrrr@{}}
+\caption{Genetic data}\tabularnewline
+\toprule
+id & conc & snp1 & snp2 & snp3 & snp4 & snp5 & snp6 & snp7 &
+snp8\tabularnewline
+\midrule
+\endfirsthead
+\toprule
+id & conc & snp1 & snp2 & snp3 & snp4 & snp5 & snp6 & snp7 &
+snp8\tabularnewline
+\midrule
+\endhead
+id1 & 33.49489 & 2 & 3 & 3 & 1 & 2 & 1 & 3 & 3\tabularnewline
+id2 & 30.53090 & 1 & 2 & 3 & 2 & 1 & 2 & 2 & 2\tabularnewline
+id3 & 31.60567 & 2 & 1 & 2 & 3 & 1 & 3 & 3 & 3\tabularnewline
+id4 & 20.90570 & 1 & 1 & 3 & 3 & 3 & 3 & 2 & 2\tabularnewline
+id5 & 32.03528 & 2 & 3 & 1 & 1 & 2 & 2 & 2 & 2\tabularnewline
+id6 & 29.79114 & 3 & 1 & 2 & 1 & 2 & 2 & 3 & 1\tabularnewline
+\bottomrule
+\end{longtable}
+
+The dataset contains the following variables:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{id}: refers to the ID of the individual who's genetic sequence
+  was analyzed
+\item
+  \textbf{conc}: concentration
+\item
+  \textbf{snp1} through \textbf{snp8}: specific sections of the genetic
+  code analyzed (SNPs)
+\end{itemize}
+
+\hypertarget{basic-exploratory-data-anaysis}{%
+\section{Basic exploratory data
+anaysis}\label{basic-exploratory-data-anaysis}}
+
+We will take a look at the data graphically in a very simple manner:
+
+\hypertarget{distribution-of-concentration}{%
+\subsection{\texorpdfstring{Distribution of
+\emph{concentration}}{Distribution of concentration}}\label{distribution-of-concentration}}
+
+\includegraphics{./figures/unnamed-chunk-3-1.pdf}
+
+~
+
+We can see that concentration approaches a normal distribution. It would
+be reasonable to attempt to fit it to a normal distribution:
+
+~
+
+\includegraphics{./figures/unnamed-chunk-4-1.pdf}
+
+~
+
+And we can see that yes, we can somewhat comfortably say that the
+concentration comes from a normal distribution.
+
+\hypertarget{most-dominant-snp-values}{%
+\subsection{Most dominant SNP values}\label{most-dominant-snp-values}}
+
+\includegraphics{./figures/unnamed-chunk-5-1.pdf}
+
+~
+
+As for the SNPs, we can see that the most dominant value for the SNPs is
+\textbf{2}, while for \emph{snp1} and \emph{snp2} the value \textbf{3}
+seems to be slightly more common than the value \textbf{1}.
+
+For the rest of the SNPs, \textbf{2} is the most common value, while
+\textbf{1} and \textbf{3} seem quite even.
+
+\newpage
+
+\hypertarget{method}{%
+\section{Method}\label{method}}
+
+We are going to use multiple regression using as predictors all other
+variables minus ``conc'' in order to predict our target variable which
+is ``conc'', we expect to obtain numerical results as our problem is to
+predict concentration. We can see that only the first and the second
+variables are significant by checking the p-values, additionaly, the
+mean squared error is around 26, which is acceptable.
+
+\footnotesize
+
+\begin{verbatim}
+#> 
+#> Call:
+#> lm(formula = conc ~ ., data = trainset)
+#> 
+#> Residuals:
+#>      Min       1Q   Median       3Q      Max 
+#> -12.5477  -4.1447   0.6243   4.3540  11.8014 
+#> 
+#> Coefficients:
+#>             Estimate Std. Error t value Pr(>|t|)    
+#> (Intercept) 31.88895    6.16232   5.175 2.69e-06 ***
+#> snp1         3.22962    0.97608   3.309  0.00158 ** 
+#> snp2         1.94927    1.02505   1.902  0.06194 .  
+#> snp3        -1.42215    0.97374  -1.461  0.14928    
+#> snp4        -1.90791    1.04548  -1.825  0.07291 .  
+#> snp5        -1.93077    1.04101  -1.855  0.06847 .  
+#> snp6         0.08094    0.93123   0.087  0.93102    
+#> snp7        -1.61372    1.10379  -1.462  0.14888    
+#> snp8         0.33321    0.95093   0.350  0.72724    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> 
+#> Residual standard error: 5.678 on 61 degrees of freedom
+#> Multiple R-squared:  0.3416, Adjusted R-squared:  0.2552 
+#> F-statistic: 3.955 on 8 and 61 DF,  p-value: 0.0008014
+#> [1] 26.80507
+\end{verbatim}
+
+\normalsize
+
+\hypertarget{results}{%
+\section{Results}\label{results}}
+
+Our most important variables to forecast concentration of protein in
+blood of corresponding individual are the genetic profiles ``snp1'' and
+``snp2'', and all the other genetic profiles are useless in the sense to
+predict concentration of protein in blood. Additionaly, genetic profiles
+``snp1'' and ``snp2'' cause positive effects on the concentration of
+protein of the individual. Which means that, increasing genetic profiles
+``snp1'' by 1 unit causes an increment on the concentration by 25 units;
+and 1 unit of increment on ``snp2'' produces 3.27 of increment on the
+concentration of protein in the blood.
+
+The model works relatively well as it has mean squared error around 26.
+So we can use this model to predict the concentration of protein in the
+blood of corresponding individual.
+
+\begin{longtable}[]{@{}lr@{}}
+\caption{Variable importance for each SNP}\tabularnewline
+\toprule
+& Overall\tabularnewline
+\midrule
+\endfirsthead
+\toprule
+& Overall\tabularnewline
+\midrule
+\endhead
+snp1 & 3.3087686\tabularnewline
+snp2 & 1.9016321\tabularnewline
+snp3 & 1.4605048\tabularnewline
+snp4 & 1.8249087\tabularnewline
+snp5 & 1.8547113\tabularnewline
+snp6 & 0.0869160\tabularnewline
+snp7 & 1.4619827\tabularnewline
+snp8 & 0.3504041\tabularnewline
+\bottomrule
+\end{longtable}
+
+\hypertarget{bibliography}{%
+\section{Bibliography}\label{bibliography}}
+
+Statistical methods (either new or olds) must be linked to the
+statistical literature.
+
+\hypertarget{appendix}{%
+\section{Appendix}\label{appendix}}
+
+Here goes the \emph{literate programming} part.
+
+Example: here we estimate the regression.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{y=}\KeywordTok{runif}\NormalTok{(}\DecValTok{10}\NormalTok{)}
+\NormalTok{x=}\KeywordTok{runif}\NormalTok{(}\DecValTok{10}\NormalTok{)}
+\KeywordTok{summary}\NormalTok{(}\KeywordTok{lm}\NormalTok{(y}\OperatorTok{~}\NormalTok{x))}
+\CommentTok{#> }
+\CommentTok{#> Call:}
+\CommentTok{#> lm(formula = y ~ x)}
+\CommentTok{#> }
+\CommentTok{#> Residuals:}
+\CommentTok{#>      Min       1Q   Median       3Q      Max }
+\CommentTok{#> -0.41510 -0.12566 -0.02933  0.13437  0.48474 }
+\CommentTok{#> }
+\CommentTok{#> Coefficients:}
+\CommentTok{#>             Estimate Std. Error t value Pr(>|t|)   }
+\CommentTok{#> (Intercept)   0.9324     0.2285   4.081  0.00353 **}
+\CommentTok{#> x            -0.8147     0.4074  -2.000  0.08054 . }
+\CommentTok{#> ---}
+\CommentTok{#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1}
+\CommentTok{#> }
+\CommentTok{#> Residual standard error: 0.2742 on 8 degrees of freedom}
+\CommentTok{#> Multiple R-squared:  0.3333, Adjusted R-squared:   0.25 }
+\CommentTok{#> F-statistic: 3.999 on 1 and 8 DF,  p-value: 0.08054}
+\end{Highlighting}
+\end{Shaded}
+
+\end{document}

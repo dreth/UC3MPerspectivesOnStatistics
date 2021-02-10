@@ -1,0 +1,39 @@
+---
+title: "Example of Techincal Report"
+author: "Stefano Cabras"
+date: "08 febbraio 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+Describe A and the data
+
+# Method
+
+Describe the statistical method and what type of results are excpected. This is the M
+
+# Results
+
+Describe the results and their interpretation in terms of A. This is $A^{-1}$.
+
+# Bibliography
+
+Statistical methods (either new or olds) must be linked to the statistical literature.
+
+# Appendix
+
+Here goes the *literate programming* part.
+
+Example: here we estimate the regression.
+
+```{r}
+y=runif(10)
+x=runif(10)
+summary(lm(y~x))
+```
+
