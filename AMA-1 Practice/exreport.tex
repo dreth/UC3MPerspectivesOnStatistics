@@ -29,7 +29,7 @@
 }
 \usepackage{hyperref}
 \hypersetup{
-            pdftitle={AMA-1 Technical Report},
+            pdftitle={AMA-1 Technical Report: Concentration of protein in blood},
             pdfauthor={Danyu Zhang, Daniel Alonso},
             pdfborder={0 0 0},
             breaklinks=true}
@@ -107,7 +107,7 @@
 \makeatother
 
 
-\title{AMA-1 Technical Report}
+\title{AMA-1 Technical Report: Concentration of protein in blood}
 \author{Danyu Zhang, Daniel Alonso}
 \date{February 10th, 2021}
 
@@ -204,11 +204,13 @@ For the rest of the SNPs, \textbf{2} is the most common value, while
 \section{Method}\label{method}}
 
 We are going to use multiple regression using as predictors all other
-variables minus ``conc'' in order to predict our target variable which
-is ``conc'', we expect to obtain numerical results as our problem is to
-predict concentration. We can see that only the first and the second
-variables are significant by checking the p-values, additionaly, the
-mean squared error is around 26, which is acceptable.
+variables minus \emph{conc} in order to predict our target variable
+which is \emph{conc}, we expect to obtain numerical results as our
+problem is to predict concentration.
+
+We can see that only the first and the second variables are significant
+by checking the p-values, additionaly, the mean squared error is around
+26, which is acceptable.
 
 \footnotesize
 
@@ -248,13 +250,14 @@ mean squared error is around 26, which is acceptable.
 
 Our most important variables to forecast concentration of protein in
 blood of corresponding individual are the genetic profiles ``snp1'' and
-``snp2'', and all the other genetic profiles are useless in the sense to
-predict concentration of protein in blood. Additionaly, genetic profiles
-``snp1'' and ``snp2'' cause positive effects on the concentration of
-protein of the individual. Which means that, increasing genetic profiles
-``snp1'' by 1 unit causes an increment on the concentration by 25 units;
-and 1 unit of increment on ``snp2'' produces 3.27 of increment on the
-concentration of protein in the blood.
+``snp2'', and all the other genetic profiles are useless when used to
+predict this concentration.
+
+Additionaly, genetic profiles ``snp1'' and ``snp2'' cause positive
+effects on the concentration of protein of the individual. Which means
+that, increasing genetic profiles ``snp1'' by 1 unit causes an increment
+on the concentration by 25 units; and 1 unit of increment on ``snp2''
+produces 3.27 of increment on the concentration of protein in the blood.
 
 The model works relatively well as it has mean squared error around 26.
 So we can use this model to predict the concentration of protein in the
@@ -284,39 +287,73 @@ snp8 & 0.3504041\tabularnewline
 \hypertarget{bibliography}{%
 \section{Bibliography}\label{bibliography}}
 
-Statistical methods (either new or olds) must be linked to the
-statistical literature.
+Data obtained from \href{}{Stefano Cabra}
 
-\hypertarget{appendix}{%
-\section{Appendix}\label{appendix}}
+\hypertarget{appendix-code}{%
+\section{Appendix: Code}\label{appendix-code}}
 
 Here goes the \emph{literate programming} part.
 
-Example: here we estimate the regression.
+\footnotesize
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{y=}\KeywordTok{runif}\NormalTok{(}\DecValTok{10}\NormalTok{)}
-\NormalTok{x=}\KeywordTok{runif}\NormalTok{(}\DecValTok{10}\NormalTok{)}
-\KeywordTok{summary}\NormalTok{(}\KeywordTok{lm}\NormalTok{(y}\OperatorTok{~}\NormalTok{x))}
-\CommentTok{#> }
-\CommentTok{#> Call:}
-\CommentTok{#> lm(formula = y ~ x)}
-\CommentTok{#> }
-\CommentTok{#> Residuals:}
-\CommentTok{#>      Min       1Q   Median       3Q      Max }
-\CommentTok{#> -0.41510 -0.12566 -0.02933  0.13437  0.48474 }
-\CommentTok{#> }
-\CommentTok{#> Coefficients:}
-\CommentTok{#>             Estimate Std. Error t value Pr(>|t|)   }
-\CommentTok{#> (Intercept)   0.9324     0.2285   4.081  0.00353 **}
-\CommentTok{#> x            -0.8147     0.4074  -2.000  0.08054 . }
-\CommentTok{#> ---}
-\CommentTok{#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1}
-\CommentTok{#> }
-\CommentTok{#> Residual standard error: 0.2742 on 8 degrees of freedom}
-\CommentTok{#> Multiple R-squared:  0.3333, Adjusted R-squared:   0.25 }
-\CommentTok{#> F-statistic: 3.999 on 1 and 8 DF,  p-value: 0.08054}
+\CommentTok{# importing libraries}
+\KeywordTok{library}\NormalTok{(dplyr)}
+\KeywordTok{library}\NormalTok{(MLmetrics)}
+\KeywordTok{library}\NormalTok{(caret)}
+\KeywordTok{library}\NormalTok{(MASS)}
+\KeywordTok{library}\NormalTok{(stringr)}
+\KeywordTok{library}\NormalTok{(ggplot2)}
+\KeywordTok{library}\NormalTok{(fitdistrplus)}
+
+\CommentTok{# importing data}
+\NormalTok{gen <-}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{"./data/gendata.csv"}\NormalTok{, }\DataTypeTok{header=}\OtherTok{TRUE}\NormalTok{, }\DataTypeTok{sep=}\StringTok{";"}\NormalTok{)}
+\NormalTok{knitr}\OperatorTok{::}\KeywordTok{kable}\NormalTok{(}
+    \KeywordTok{head}\NormalTok{(gen),}
+    \DataTypeTok{booktabs=}\OtherTok{TRUE}\NormalTok{,}
+    \DataTypeTok{caption=}\StringTok{"Genetic data"}\NormalTok{,}
+\NormalTok{)}
+\NormalTok{gen <-}\StringTok{ }\NormalTok{gen[}\DecValTok{2}\OperatorTok{:}\KeywordTok{length}\NormalTok{(gen)]}
+\NormalTok{cols <-}\StringTok{ }\KeywordTok{length}\NormalTok{(}\KeywordTok{names}\NormalTok{(gen))}
+\NormalTok{gen <-}\StringTok{ }\KeywordTok{sapply}\NormalTok{(gen, as.numeric)}
+
+\CommentTok{# concentration histogram}
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{1}\NormalTok{))}
+\KeywordTok{hist}\NormalTok{(gen[,}\DecValTok{1}\NormalTok{], }\DataTypeTok{main=}\StringTok{"concentration"}\NormalTok{)}
+
+\CommentTok{# SNP plots}
+\KeywordTok{par}\NormalTok{(}\DataTypeTok{mfrow=}\KeywordTok{c}\NormalTok{(}\DecValTok{3}\NormalTok{,}\DecValTok{3}\NormalTok{))}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{2}\OperatorTok{:}\NormalTok{cols) \{}
+    \KeywordTok{barplot}\NormalTok{(}\KeywordTok{table}\NormalTok{(gen[,i]), }\DataTypeTok{main=}\KeywordTok{str_interp}\NormalTok{(}\StringTok{"snp$\{i-1\}"}\NormalTok{))}
+\NormalTok{\}}
+
+\CommentTok{# converting gen to dataframe}
+\NormalTok{gen <-}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(gen)}
+
+\CommentTok{# Splitting dataset into train and test}
+\NormalTok{n=}\KeywordTok{nrow}\NormalTok{(gen)}
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{7}\NormalTok{)}
+\NormalTok{trainset=(}\DecValTok{1}\OperatorTok{:}\NormalTok{n)}\OperatorTok{%in%}\KeywordTok{sample}\NormalTok{(n,}\KeywordTok{floor}\NormalTok{(n}\OperatorTok{*}\FloatTok{0.7}\NormalTok{)) }
+\NormalTok{testset=}\OperatorTok{!}\NormalTok{trainset }
+\NormalTok{trainset=gen[trainset,]}
+\NormalTok{testset=gen[testset,]}
+
+\CommentTok{# Modelling}
+\NormalTok{model1 <-}\StringTok{ }\KeywordTok{lm}\NormalTok{(conc }\OperatorTok{~}\StringTok{ }\NormalTok{., }\DataTypeTok{data =}\NormalTok{ trainset)}
+\KeywordTok{summary}\NormalTok{(model1)}
+
+\CommentTok{# Prediction and Metrics}
+\NormalTok{pred1 =}\StringTok{ }\KeywordTok{predict}\NormalTok{(model1, testset)}
+\KeywordTok{MSE}\NormalTok{(pred1, testset}\OperatorTok{$}\NormalTok{conc)}
+
+\CommentTok{# variable importance plot}
+\NormalTok{impo <-}\StringTok{ }\KeywordTok{varImp}\NormalTok{(model1, }\DataTypeTok{scale=}\OtherTok{FALSE}\NormalTok{)}
+\NormalTok{knitr}\OperatorTok{::}\KeywordTok{kable}\NormalTok{(}
+\NormalTok{    impo,}
+    \DataTypeTok{booktabs=}\OtherTok{TRUE}\NormalTok{,}
+    \DataTypeTok{caption=}\StringTok{"Variable importance for each SNP"}\NormalTok{,}
+\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 

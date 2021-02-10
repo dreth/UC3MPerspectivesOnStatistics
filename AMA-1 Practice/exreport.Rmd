@@ -1,5 +1,5 @@
 ---
-title: "AMA-1 Technical Report"
+title: "AMA-1 Technical Report: Concentration of protein in blood"
 author: "Danyu Zhang, Daniel Alonso"
 date: "February 10th, 2021"
 output: pdf_document
@@ -122,7 +122,7 @@ MSE(pred1, testset$conc)
 
 # Results
 
-Our most important variables to forecast concentration of protein in blood of corresponding individual are the genetic profiles "snp1" and "snp2", and all the other genetic profiles are useless in the sense to predict concentration of protein in blood. 
+Our most important variables to forecast concentration of protein in blood of corresponding individual are the genetic profiles "snp1" and "snp2", and all the other genetic profiles are useless when used to predict this concentration. 
 
 Additionaly, genetic profiles "snp1" and "snp2" cause positive effects on the concentration of protein of the individual. Which means that, increasing genetic profiles "snp1" by 1 unit causes an increment on the concentration by 25 units; and 1 unit of increment on "snp2" produces 3.27 of increment on the concentration of protein in the blood. 
 
@@ -139,11 +139,13 @@ knitr::kable(
 
 # Bibliography
 
-Statistical methods (either new or olds) must be linked to the statistical literature.
+Data obtained from [Stefano Cabra]()
 
 # Appendix: Code
 
 Here goes the *literate programming* part.
+
+\footnotesize
 
 ```{r, echo=TRUE, warning=FALSE, message=FALSE, eval=FALSE}
 # importing libraries
@@ -203,5 +205,4 @@ knitr::kable(
     caption="Variable importance for each SNP",
 )
 ```
-
 
