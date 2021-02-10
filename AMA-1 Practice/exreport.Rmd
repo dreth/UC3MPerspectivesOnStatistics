@@ -139,7 +139,7 @@ knitr::kable(
 
 # Bibliography
 
-Data obtained from [Stefano Cabra]()
+Data obtained from [Stefano Cabras](http://portal.uc3m.es/portal/page/portal/dpto_estadistica/personal/Stefano_Cabras)
 
 # Appendix: Code
 
