@@ -29,7 +29,7 @@ In this research, we will try to study which genes are the most relevant in dete
 We are going to use data containing information on 8 SNP (Single Nucleotid Polymorfism) of 100 individuals.
 The DNA is a combination of nucleobasis (cytosine, guanine,adenine and thymine) and these combination sequence are independent, so we will not have to worry about multicolinearity during this study.
 
-# Method
+# Methods
 
 First, in order to determine if a gen is relevant we will perform a simple linear regression where the dependent variable will be the concentration of a specific protein, and the independent covarite will be a specific gen. We will do this, for evert gen having in total 8 linear regressions.
 When doing a linear regression we have to assume the following:
