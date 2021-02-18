@@ -241,7 +241,7 @@ If we were to use the p-value rule, where $p-val < 0.005$ from the performed lin
 
 ## Multitest
 
-We perform a multitest, where we obta
+We perform a multitest, where we obtain a result for each test (Bonferroni, Benjamini-Hochberg and Benjamini-Yekutieli).
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # multitest
@@ -254,6 +254,8 @@ knitr::kable(
     caption="Multitest",
 )
 ```
+
+\newpage
 
 # Results
 
@@ -290,7 +292,7 @@ A.lfdr.n01[A.lfdr.n01 == TRUE]
 
 For the Local false discovery rate, *snp1* and *snp3* are significant.
 
-# Final selection
+## Final selection
 
 We only select *snp1* as a relevant genetic profile marker because is the only one that is significant for all methods. As it is a health-related matter, we intend to be strict when it comes to selecting the gene that predicts concentration of protein in blood the most accurately.
 
