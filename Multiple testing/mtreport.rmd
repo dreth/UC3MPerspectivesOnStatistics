@@ -24,7 +24,7 @@ library(locfdr)
 
 # Introduction
 
-In this research, we will try to study which genes are the most relevant in determining the concentration of a specific protein.   
+In this research, we will try to study which genes are the most relevant in determining the concentration of a specific protein and get a lower bound for the false discovery rate.   
 
 We are going to use data containing information on 8 SNP (Single Nucleotid Polymorfism) of 100 individuals.
 The DNA is a combination of nucleobasis (cytosine, guanine,adenine and thymine) and these combination sequence are independent, so we will not have to worry about multicolinearity during this study.
@@ -62,6 +62,10 @@ As we are doing multiple testing, we have to find a better meassure, as when we 
 many tests, we have more change of getting a strange result. So we want to control the error, and not the p-value.
 
 In addition, we have to get the *lower bound*. It is the probability of the null hypothesis (the target variable is independent from the particular predictor, which means that that particular *snp* does not contribute the concentration of protein in the blood for such corresponding individual) given our specific dataset. We want this value to be *0.05*, which means that we want to reduce the probability of committing a type I error. However, by reducing this type I error incidence, it is likely that we increase the incidence of type II errors (meaning we might not take into account the relevent variables as a result of the strict criterion that we set for variable selection)
+
+This lower bound, assuming that p-value is uniformly distributed in the interval $(0,1)$, will be computed as follows:
+
+$$E[H_0 | data] = \frac{-e * p * log(p)}{q - e * p * log(p)}$$
 
 We will use 5 methods, however, in order to be sufficiently sure that a gene is relevant to predict cocentration of protein in blood, we will only confidently select an *snp* if all of these methods' results coincide.
 
@@ -123,6 +127,15 @@ for (i in 2:length(names(gen))) {
 
 # function used for p-val
 lower_bound <- function(p) {-exp(1)*p*log(p)/(1-exp(1)*p*log(p))}
+
+# alternative function for lower bound
+alpha.star=function(p,p.tilde=0){
+  m0=sum(p>p.tilde)
+  m=length(p)
+  xi0.hat=-m0/sum(log(p))
+  res=(-xi0.hat*(p^xi0.hat)*exp(1)*log(p))*(p<exp(-1/xi0.hat))+1*(p>exp(-1/xi0.hat))
+  return(res/(res+1))
+}
 
 # alpha
 alpha = 0.2
@@ -225,6 +238,7 @@ for (i in 1:length(models)) {
     pvals <- c(pvals, summary(models[[i]])$coefficients[2,4])
 }
 names(pvals) <- names(gen)[2:length(names(gen))]
+all_pvals <- pvals
 
 tbl <- data.frame(model = names(pvals), 
         pval = round(unname(pvals), 2))
@@ -257,6 +271,21 @@ knitr::kable(
 
 \newpage
 
+## Assumptions
+
+On one hand, the linear model assumptions are true. However, we can't assert that our p-values are uniformly distributed beacause we dont have enough models.
+
+So we decide to use the empirical null distribution:
+
+$$\underline{\alpha}^* (p) = \frac{1}{1 + B^* (p)}$$
+
+Where:
+
+$$\underline{B}^*(p)= \begin{cases} 
+-\widehat{\xi}_0p^{\widehat{\xi}_0}e \log p & p<e^{-1/\widehat{\xi}_0}\\1 & otherwise \end{cases}$$
+
+With this method, our lower bound is equal to zero, perhaps we do not have a sufficient enough models/p-values in order to utilize this method. Therefore, we will assume that in the hypothetical scenario where we had more models, our p-value could be uniformly distrubuted, and it would be reasonable to use use the first method to calculate the lower bound, in order to present a more conservative (and accurate) result.
+
 # Results
 
 The most relevant (and most of the times uniquely relevant) genetic profile marker for each method is *snp1*, we can see this as follows:
@@ -265,11 +294,11 @@ The most relevant (and most of the times uniquely relevant) genetic profile mark
 
 Only the *snp1* is significant.
 
-### BH test
+### Benjamini-Hochberg test
 
 Only the *snp1* is significant.
 
-### BY test
+### Benjamini-Yekutieli test
 
 Only the *snp1* is significant.
 
@@ -284,7 +313,8 @@ A.q[A.q == TRUE]
 
 ### Local false discovery rate
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10, fig.height=7, results='hide'}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10, fig.height=7, results='hide', fig.show='hide'}
+res.n01=locfdr(zz=qnorm(pvals),nulltype = 0)
 names(res.n01$fdr) <- names(pvals)
 A.lfdr.n01=res.n01$fdr<alpha
 A.lfdr.n01[A.lfdr.n01 == TRUE]
@@ -298,7 +328,7 @@ We only select *snp1* as a relevant genetic profile marker because is the only o
 
 ## Lower bound of false discovery rate
 
-In order to select the lower bound, we choose the Benjamini-Yekutieli method beacuse is the most restrictive. 
+In order to select the lower bound, we choose the Benjamini-Yekutieli method as is the most restrictive. 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 #pvals
@@ -319,9 +349,18 @@ knitr::kable(
 )
 ```
 
-\newpage
+# Appendix
 
-# Appendix: Plots and code
+## Checking that the p-value is uniformly distributed
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10, fig.height=6}
+plot((1:8)/8,all_pvals, xlim=c(0,1), ylim=c(0,1))
+abline(0,1)
+```
+
+We do not have enough data to confidently say that the p-value is or is not uniformly distributed.
+
+## Code used to obtain the results in the report
 
 ```{r, echo=TRUE, warning=FALSE, message=FALSE, eval=FALSE}
 # importing libraries
