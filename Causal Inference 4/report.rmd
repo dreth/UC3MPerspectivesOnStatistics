@@ -1,5 +1,5 @@
 ---
-title: 'Causal Inference #4'
+title: 'Causal Inference: Perspectives on Statistics'
 author: 'Javier Esteban Aragoneses, Mauricio Marcos Fajgenbaun, Danyu Zhang, Daniel Alonso'
 date: 'March 20, 2021'
 output: 'pdf_document'
@@ -17,7 +17,9 @@ options(JULIA_HOME = '/home/dreth/julia/bin')
 
 # Introduction
 
-For our project, We will be using the Memory Test on Drugged Islanders data set, 
+For our project, we will try to assess what variable is the most important in explaining the difference in memory test performance and try to estimate the causality effect just described.
+In order to do this, we will use the Memory Test on Drugged Islanders data set, containing 5 variables: age, happy sad group, dosage (quantity of drug administrated), drug (binary variable for having been treated with a specific drug or not) and diff (difference in before and after taking the drug).
+
 
 for more information, click [link]()
 
@@ -29,11 +31,12 @@ invisible(lapply(pkgs, library, character.only = TRUE))
 
 # Model
 
-```{r, echo=TRUE, warning=FALSE, message=FALSE}
-# importing data
-df <- read.csv('./data/heartdata.csv', sep=',')
-df <- df[c("anaemia","diabetes","high_blood_pressure","smoking","DEATH_EVENT","platelets")]
-```
+We will build two difference models both based on random forest algorithm. First, we will perform a regular random forest, to asses what is the most important variable in predicting the difference of memory (difference in memory is our dependent variable).```{r}
+Once we have our most important variable, we will asses the magnitud of the causality using a Causal Forest, that is a random forest based algorithm, although with some specific particularities.
+
+First, let´s perform the random forest and find the most important variable to predict the difference in memory:
+
+``` 
 
 ```{r, echo=TRUE, warning=FALSE, message=FALSE}
 # importing data
@@ -51,6 +54,13 @@ form <- as.formula(str_interp("Diff~${paste(names(df)[names(df)!='Diff'], collap
 rf <- randomForest(form,data=df ,importance=TRUE ,mtry=3 ,ntree=1000)
 varImpPlot(rf, main="Variable importance")
 ```
+
+As we can see, the most important variable is "drug", meaning that having been administrated the drug or not, will be the most important factor in predicting the difference in memory. 
+Now, let´s talk about the causal (honest) forest. The honest causal forest is a random forest, made up of honest causal trees. The tree will explicitly search for the subgroups where the treatment effects differ the most. Here, we will get the difference in the outcome variable between the treatment and the control conditions within a leaf of the tree, and will call the the treatment effect. So the causal tree uses splitting criteria that explicitly balances the two things we are trying to do: first, finding where treatment effect most differ, and second estimating the tratment effect accurately.
+Again, in this research our treatment effect is the drug administrated to individuals. This is why the tree is "causal", as it splits the data by asking itself: "where can we make a split that will produce the biggest difference in treatment effects across leaves, but still give us an accurate estimate of the treatment effect?".
+These trees are also "honest", as the algorithm splits the data in two differnt subsamples: one for splitting the data ("splitting subsample") into different leaves, or final nodes. The other part of the data is droped down the tree until it falls into a leaf ("estimating subsample"). Then, we can estimate the difference in outcome between the mean of the treatment and the mean of the "control" cases. This prevents our causal tree from producing overfitting.
+Actualy, it has been proved by Athey (one of the biggest contributors on the construction of this kind of trees) tht these treatment effect estimates are asymptotically normal. In other words, as the sample size grows, the treatment effect estimate is normally distributed. This is very useful, as we can estimate the variance of the estimation and build 95% confidence intervals.
+
 
 # Causal forest
 
