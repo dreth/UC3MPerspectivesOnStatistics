@@ -17,6 +17,10 @@ options(JULIA_HOME = '/home/dreth/julia/bin')
 
 # Introduction
 
+For our project, We will be using the Memory Test on Drugged Islanders data set, 
+
+for more information, click [link]()
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # importing libraries
 pkgs <- c("glmnet", "rpart", "rpart.plot", "randomForest", "devtools", "tidyverse", "knitr", "caret", "xgboost", "causalTree","grf", "fastDummies", "stringr", 'caret')
@@ -27,57 +31,58 @@ invisible(lapply(pkgs, library, character.only = TRUE))
 
 ```{r, echo=TRUE, warning=FALSE, message=FALSE}
 # importing data
-df <- read.csv('./data/gendata.csv', sep=';')
-df <- df[2:length(names(df))]
-df[2:length(names(df))] <- lapply(df[2:length(names(df))], FUN=as.factor)
-preds <- names(df[names(df) != 'conc'])
-df <- dummy_cols(df)
-df <- df[,!(names(df) %in% preds)]
+df <- read.csv('./data/heartdata.csv', sep=',')
+df <- df[c("anaemia","diabetes","high_blood_pressure","smoking","DEATH_EVENT","platelets")]
+```
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# importing data
+df <- read.csv('./data/Islander_data.csv', sep=',')
+df <- df[c("age","Happy_Sad_group","Dosage","Drug","Diff")]
+df$Happy_Sad_group <- as.numeric(ifelse(df$Happy_Sad_group == 'H', 1, 0))
+df <- df %>% dplyr::filter(Drug != 'T')
+df$Drug <- as.numeric(ifelse(df$Drug == 'A', 1, 0))
+df$Dosage <- as.numeric(df$Dosage)
 ```
 
 ```{r, echo=TRUE, warning=FALSE, message=FALSE}
 # Random forest to find most important variable
-form <- as.formula(str_interp("conc~${paste(names(df)[names(df)!='conc'], collapse='+')}"))
+form <- as.formula(str_interp("Diff~${paste(names(df)[names(df)!='Diff'], collapse='+')}"))
 rf <- randomForest(form,data=df ,importance=TRUE ,mtry=3 ,ntree=1000)
 varImpPlot(rf, main="Variable importance")
 ```
 
-
 # Causal forest
 
 ```{r, echo=TRUE, warning=FALSE, message=FALSE}
-# traintest
-set.seed(12)
-spl <- caret::createDataPartition(df$conc, p = 0.8, list = FALSE)
-Train <- df[spl,]
-Test <- df[-spl,]
-
-# train
-X_train = Train[names(Train) != 'conc' & names(Train) != 'snp1_1']
-Y_train = Train[,"conc"]
-W_train = Train[,"snp1_1"]
-
-# test
-X_test = Test[names(Test) != 'conc' & names(Test) != 'snp1_1']
-Y_test = Test[,"conc"]
-W_test = Test[,"snp1_1"]
+# full dataset
+X = df[names(df) != 'Diff' & names(df) != 'Drug']
+Y = df[,"Diff"]
+W = df[,"Drug"]
 
 # causal forests
-cf = causal_forest(X_train,Y_train,W_train,num.trees =10000)
+cf = causal_forest(X,Y,W,num.trees=1000)
 
-# Predict with confidence intervals
-pred <- predict(cf, X_test, estimate.variance = TRUE)
-sigma.hat <- sqrt(pred$variance.estimate)
-plot(X_test[,1], pred$predictions, ylim=range(pred$predictions + qnorm(0.975) * sigma.hat, pred$predictions - qnorm(0.975) * sigma.hat), xlam = "x", ylab = "tau", type="l")
-lines(X_test[, 1], tau.hat$predictions + 1.96 * sigma.hat, col = 1, lty = 2)
-lines(X_test[, 1], tau.hat$predictions - 1.96 * sigma.hat, col = 1, lty = 2)
-lines(X_test[, 1], pmax(0, X_test[, 1]), col = 2, lty = 1)
-
+# Estimate treatment effects for the training data using out-of-bag prediction.
+preds = predict(cf)
+hist(preds$predictions)
 ```
+
 ```{r, echo=TRUE, warning=FALSE, message=FALSE}
-n <- 500
-p <- 10
-X <- matrix(rnorm(n * p), n, p)
-W <- rbinom(n, 1, 0.5)
-Y <- pmax(X[, 1], 0) * W + X[, 2] + pmin(X[, 3], 0) + rnorm(n)
+# Estimate the conditional average treatment effect on the full sample (CATE).
+average_treatment_effect(cf, target.sample = "all")
+```
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Estimate the conditional average treatment effect on the treated sample (CATT).
+# Here, we don't expect much difference between the CATE and the CATT, since
+# treatment assignment was randomized.
+average_treatment_effect(cf, target.sample = "treated")
+```
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Add confidence intervals for heterogeneous treatment effects; growing more
+# trees is now recommended.
+cf = causal_forest(X, Y, W, num.trees = 4000)
+sd(cf$predictions)
 ```
