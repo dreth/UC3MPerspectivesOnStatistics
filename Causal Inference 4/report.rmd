@@ -28,14 +28,14 @@ invisible(lapply(pkgs, library, character.only = TRUE))
 
 # Model
 
-We will build two difference models both based on random forest algorithm. First, we will perform a regular random forest, to asses what is the most important variable in predicting the difference of memory (difference in memory is our dependent variable).```{r}
+We will build two difference models both based on random forest algorithm. First, we will perform a regular random forest, to asses what is the most important variable in predicting the difference of memory (difference in memory is our dependent variable). 
+
 Once we have our most important variable, we will asses the magnitud of the causality using a Causal Forest, that is a random forest based algorithm, although with some specific particularities.
 
 First, let´s perform the random forest and find the most important variable to predict the difference in memory:
 
-``` 
 
-```{r, echo=TRUE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # importing data
 df <- read.csv('./data/Islander_data.csv', sep=',')
 df <- df[c("age","Happy_Sad_group","Dosage","Drug","Diff")]
@@ -45,7 +45,7 @@ df$Drug <- as.numeric(ifelse(df$Drug == 'A', 1, 0))
 df$Dosage <- as.numeric(df$Dosage)
 ```
 
-```{r, echo=TRUE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Random forest to find most important variable
 form <- as.formula(str_interp("Diff~${paste(names(df)[names(df)!='Diff'], collapse='+')}"))
 rf <- randomForest(form,data=df ,importance=TRUE ,mtry=3 ,ntree=1000)
@@ -59,13 +59,14 @@ Now, let´s talk about the causal (honest) forest. The honest causal forest is a
 Again, in this research our treatment effect is the drug administrated to individuals. This is why the tree is "causal", as it splits the data by asking itself: "where can we make a split that will produce the biggest difference in treatment effects across leaves, but still give us an accurate estimate of the treatment effect?".
 
 These trees are also "honest", as the algorithm splits the data in two differnt subsamples: one for splitting the data ("splitting subsample") into different leaves, or final nodes. The other part of the data is droped down the tree until it falls into a leaf ("estimating subsample"). Then, we can estimate the difference in outcome between the mean of the treatment and the mean of the "control" cases. This prevents our causal tree from producing overfitting.
+
 Actually, it has been proved by Athey (one of the biggest contributors on the construction of this kind of trees) tht these treatment effect estimates are asymptotically normal. In other words, as the sample size grows, the treatment effect estimate is normally distributed. This is very useful, as we can estimate the variance of the estimation and build 95% confidence intervals.
 The causal forest function has three primary inputs: X will be a matrix of covariates which we are using to predict the heterogeneity in treatment effects(age, dosage, Happy_Sad_group). Y is a vector of the outcome of interest (dif in memory), and W (drug) is the treatment assigment. 
 
 
 # Causal forest
 
-```{r, echo=TRUE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # full dataset
 X = df[names(df) != 'Diff' & names(df) != 'Drug']
 Y = df[,"Diff"]
@@ -79,21 +80,80 @@ preds = predict(cf)
 hist(preds$predictions)
 ```
 
-```{r, echo=TRUE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Estimate the conditional average treatment effect on the full sample (CATE).
 average_treatment_effect(cf, target.sample = "all")
 ```
 
-```{r, echo=TRUE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Estimate the conditional average treatment effect on the treated sample (CATT).
 # Here, we don't expect much difference between the CATE and the CATT, since
 # treatment assignment was randomized.
 average_treatment_effect(cf, target.sample = "treated")
 ```
 
-```{r, echo=TRUE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Add confidence intervals for heterogeneous treatment effects; growing more
 # trees is now recommended.
 cf = causal_forest(X, Y, W, num.trees = 4000)
-sd(cf$predictions)
+preds <- cf$predictions
+sd(preds)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+cf %>% 
+  variable_importance() %>% 
+  as.data.frame() %>% 
+  mutate(variable = colnames(cf$X.orig)) %>% 
+  arrange(desc(V1))
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+p1 <- ggplot(df, aes(x = Dosage, y = preds)) +
+  geom_point() +
+  geom_smooth(method = "loess", span = 1) +
+  theme_light()
+
+p2 <- ggplot(df, aes(x = age, y = preds)) +
+  geom_point() +
+  geom_smooth(method = "loess", span = 1) +
+  theme_light()
+
+p3 <- ggplot(df, aes(x = Happy_Sad_group, y = preds)) +
+  geom_point() +
+  geom_smooth(method = "loess", span = 1) +
+  theme_light()
+
+gridExtra::grid.arrange(p1, p2, p3)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+plot_htes <- function(cf_preds, ci = FALSE, z = 1.96) {
+  if (is.null(cf_preds$predictions) || nrow(cf_preds$predictions) == 0)
+    stop("cf_preds must include a matrix called 'predictions'")
+  
+  out <- ggplot(
+    mapping = aes(
+      x = rank(cf_preds$predictions), 
+      y = cf_preds$predictions
+    )
+  ) +
+    geom_point() +
+    labs(x = "Rank", y = "Estimated Treatment Effect") +
+    theme_light()
+  
+  if (ci && nrow(cf_preds$variance.estimates) > 0) {
+    out <- out +
+      geom_errorbar(
+        mapping = aes(
+          ymin = cf_preds$predictions + z * sqrt(cf_preds$variance.estimates),
+          ymax = cf_preds$predictions - z * sqrt(cf_preds$variance.estimates)
+        )
+      )
+  }
+    
+  return(out)
+}
+
+plot_htes(cf)
 ```
