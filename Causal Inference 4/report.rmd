@@ -197,3 +197,107 @@ plot_htes(predict(cf, estimate.variance=TRUE), ci = TRUE)
 ```
 
 We can see here that there is some variation, so we can say there is some heterogeneity in the treatment effect.
+
+\newpage
+
+# Annex: Code
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE, eval=FALSE}
+# importing libraries
+pkgs <- c("glmnet", "rpart", "rpart.plot", "randomForest", "devtools", "tidyverse", "knitr",
+ "caret", "xgboost", "causalTree","grf", "fastDummies", "stringr", 'caret')
+invisible(lapply(pkgs, library, character.only = TRUE))
+
+# importing data
+df <- read.csv('./data/Islander_data.csv', sep=',')
+df <- df[c("age","Happy_Sad_group","Dosage","Drug","Diff")]
+df$Happy_Sad_group <- as.numeric(ifelse(df$Happy_Sad_group == 'H', 1, 0))
+df <- df %>% dplyr::filter(Drug != 'T')
+df$Drug <- as.numeric(ifelse(df$Drug == 'A', 1, 0))
+df$Dosage <- as.numeric(df$Dosage)
+
+# Random forest to find most important variable
+form <- as.formula(str_interp("Diff~${paste(names(df)[names(df)!='Diff'], collapse='+')}"))
+rf <- randomForest(form,data=df ,importance=TRUE ,mtry=3 ,ntree=1000)
+varImpPlot(rf, main="Variable importance")
+
+# full dataset
+X = df[names(df) != 'Diff' & names(df) != 'Drug']
+Y = df[,"Diff"]
+W = df[,"Drug"]
+
+# causal forests
+cf = causal_forest(X,Y,W,num.trees=1000)
+
+# Estimate treatment effects for the training data using out-of-bag prediction.
+preds = predict(cf)
+hist(preds$predictions)
+
+# summary of predictions
+summary(preds$predictions)
+
+# Estimate the conditional average treatment effect on the full sample (CATE).
+average_treatment_effect(cf, target.sample = "all")
+
+# Estimate the conditional average treatment effect on the treated sample (CATT).
+# Here, we don't expect much difference between the CATE and the CATT, since
+# treatment assignment was randomized.
+average_treatment_effect(cf, target.sample = "treated")
+
+# Add confidence intervals for heterogeneous treatment effects; growing more
+# trees is now recommended.
+cf = causal_forest(X, Y, W, num.trees = 4000)
+preds <- cf$predictions
+sd(preds)
+
+# Variable importance
+cf %>% 
+  variable_importance() %>% 
+  as.data.frame() %>% 
+  mutate(variable = colnames(cf$X.orig)) %>% 
+  arrange(desc(V1))
+
+# vars vs preds
+p1 <- ggplot(df, aes(x = Dosage, y = preds)) +
+  geom_point() +
+  geom_smooth(method = "loess", span = 1) +
+  theme_light()
+
+p2 <- ggplot(df, aes(x = age, y = preds)) +
+  geom_point() +
+  geom_smooth(method = "loess", span = 1) +
+  theme_light()
+
+p3 <- ggplot(df, aes(x = Happy_Sad_group, y = preds)) +
+  geom_point() +
+  geom_smooth(method = "loess", span = 1) +
+  theme_light()
+
+gridExtra::grid.arrange(p1, p2, p3)
+
+# plotting CIs for predictions
+plot_htes <- function(cf_preds, ci = FALSE, z = 0.975) {
+  out <- ggplot(
+    mapping = aes(
+      x = rank(cf_preds$predictions), 
+      y = cf_preds$predictions
+    )
+  ) +
+    geom_point() +
+    labs(x = "Rank", y = "Estimated Treatment Effect") +
+    theme_light()
+  
+  if (ci) {
+    out <- out +
+      geom_errorbar(
+        mapping = aes(
+          ymin = cf_preds$predictions + qnorm(z) * sqrt(cf_preds$variance.estimates),
+          ymax = cf_preds$predictions - qnorm(z) * sqrt(cf_preds$variance.estimates)
+        )
+      )
+  }
+    
+  return(out)
+}
+plot_htes(predict(cf, estimate.variance=TRUE), ci = TRUE)
+```
