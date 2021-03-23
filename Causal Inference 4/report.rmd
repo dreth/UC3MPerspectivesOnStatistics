@@ -15,6 +15,8 @@ knitr::knit_engines$set(julia = JuliaCall::eng_juliacall)
 options(JULIA_HOME = '/home/dreth/julia/bin')
 ```
 
+\small
+
 # Introduction
 
 For our project, we will try to assess what variable is the most important in explaining the difference in memory test performance and try to estimate the causality effect just described.
@@ -30,10 +32,9 @@ invisible(lapply(pkgs, library, character.only = TRUE))
 
 We will build two difference models both based on random forest algorithm. First, we will perform a regular random forest, to asses what is the most important variable in predicting the difference of memory (difference in memory is our dependent variable). 
 
-Once we have our most important variable, we will asses the magnitud of the causality using a Causal Forest, that is a random forest based algorithm, although with some specific particularities.
+Once we have our most important variable, we will asses the magnitud of the causality using a Causal Forest, that is a random forest based algorithm, although with some specific particularities that we will explain later.
 
 First, let´s perform the random forest and find the most important variable to predict the difference in memory:
-
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # importing data
@@ -45,7 +46,7 @@ df$Drug <- as.numeric(ifelse(df$Drug == 'A', 1, 0))
 df$Dosage <- as.numeric(df$Dosage)
 ```
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3.5, fig.width=13}
 # Random forest to find most important variable
 form <- as.formula(str_interp("Diff~${paste(names(df)[names(df)!='Diff'], collapse='+')}"))
 rf <- randomForest(form,data=df ,importance=TRUE ,mtry=3 ,ntree=1000)
@@ -66,7 +67,7 @@ The causal forest function has three primary inputs: X will be a matrix of covar
 
 # Causal forest
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3.5, fig.width=12}
 # full dataset
 X = df[names(df) != 'Diff' & names(df) != 'Drug']
 Y = df[,"Diff"]
@@ -80,10 +81,31 @@ preds = predict(cf)
 hist(preds$predictions)
 ```
 
+This is the distribution of the treatment effect, using out-of-bag prediction. As we know, we can just take the mean of the distribution and consider this as the avarage treatment effect. We can certainly do this:
+
+\tiny
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+summary(preds$predictions)
+```
+
+\small
+
+According to this approach, the average treatment effect would be of 9.498 on the patients who undergo the clinical study. Nevertheless, the package grf (the one we are using) provides us with an interesting tool. A more accurate estimate can be achieved by plugging causal forest predictions into a doubly robust average treatment effect estimator. We will do it first with the full population:
+
+\tiny
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Estimate the conditional average treatment effect on the full sample (CATE).
 average_treatment_effect(cf, target.sample = "all")
 ```
+
+\small
+
+As we can see, now the mean of the ATE is a bit lower: 9.61, with a standard error of 1.63.
+We can also find the same efficient estimator, but among the "treated" individuals.
+
+\tiny
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Estimate the conditional average treatment effect on the treated sample (CATT).
@@ -91,6 +113,12 @@ average_treatment_effect(cf, target.sample = "all")
 # treatment assignment was randomized.
 average_treatment_effect(cf, target.sample = "treated")
 ```
+
+\small
+
+And again, our results are close but a the mean of the average treatment effect is a bit lower and also its standard error.
+
+\tiny
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Add confidence intervals for heterogeneous treatment effects; growing more
@@ -100,6 +128,12 @@ preds <- cf$predictions
 sd(preds)
 ```
 
+\small
+
+We would also like to know the nature of the heterogeneity: what variables are important considered the treatment? So we can check the importance of each of the variables in the model and plot the relationship of these variables and the predicted treatment effect.
+
+\tiny
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 cf %>% 
   variable_importance() %>% 
@@ -108,7 +142,9 @@ cf %>%
   arrange(desc(V1))
 ```
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+\small
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3.5, fig.width=12}
 p1 <- ggplot(df, aes(x = Dosage, y = preds)) +
   geom_point() +
   geom_smooth(method = "loess", span = 1) +
@@ -127,10 +163,12 @@ p3 <- ggplot(df, aes(x = Happy_Sad_group, y = preds)) +
 gridExtra::grid.arrange(p1, p2, p3)
 ```
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-plot_htes <- function(cf_preds, ci = FALSE, z = 1.96) {
-  if (is.null(cf_preds$predictions) || nrow(cf_preds$predictions) == 0)
-    stop("cf_preds must include a matrix called 'predictions'")
+As we can see, there seems to be a linear positive relationship between the treatment effect and dosage. This makes sense, as intuition would tell us that the bigger the dossage, the higher the treatment effect. There don´t seem to be a strong relationship between the prediction of the treatment effect and the age, although we may think that the treatment may be "working better" when the pacients are around 40 years old.
+
+We can also question if the treatment effect is even heterogeneous. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3.5, fig.width=12}
+plot_htes <- function(cf_preds, ci = FALSE, z = 0.975) {
   
   out <- ggplot(
     mapping = aes(
@@ -142,12 +180,12 @@ plot_htes <- function(cf_preds, ci = FALSE, z = 1.96) {
     labs(x = "Rank", y = "Estimated Treatment Effect") +
     theme_light()
   
-  if (ci && nrow(cf_preds$variance.estimates) > 0) {
+  if (ci) {
     out <- out +
       geom_errorbar(
         mapping = aes(
-          ymin = cf_preds$predictions + z * sqrt(cf_preds$variance.estimates),
-          ymax = cf_preds$predictions - z * sqrt(cf_preds$variance.estimates)
+          ymin = cf_preds$predictions + qnorm(z) * sqrt(cf_preds$variance.estimates),
+          ymax = cf_preds$predictions - qnorm(z) * sqrt(cf_preds$variance.estimates)
         )
       )
   }
@@ -155,5 +193,7 @@ plot_htes <- function(cf_preds, ci = FALSE, z = 1.96) {
   return(out)
 }
 
-plot_htes(cf)
+plot_htes(predict(cf, estimate.variance=TRUE), ci = TRUE)
 ```
+
+We can see here that there is some variation, so we can say there is some heterogeneity in the treatment effect.
