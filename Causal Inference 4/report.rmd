@@ -17,7 +17,7 @@ options(JULIA_HOME = '/home/dreth/julia/bin')
 
 \small
 
-# Introduction
+# Introduction (A)
 
 For our project, we will try to assess what variable is the most important in explaining the difference in memory test performance and try to estimate the causality effect just described.
 In order to do this, we will use the Memory Test on Drugged Islanders data set, containing 5 variables: age, happy sad group, dosage (quantity of drug administrated), drug (binary variable for having been treated with a specific drug or not) and diff (difference in before and after taking the drug).
@@ -28,7 +28,7 @@ pkgs <- c("glmnet", "rpart", "rpart.plot", "randomForest", "devtools", "tidyvers
 invisible(lapply(pkgs, library, character.only = TRUE))
 ```
 
-# Model
+# Model (M)
 
 We will build two difference models both based on random forest algorithm. First, we will perform a regular random forest, to asses what is the most important variable in predicting the difference of memory (difference in memory is our dependent variable). 
 
@@ -61,11 +61,11 @@ Again, in this research our treatment effect is the drug administrated to indivi
 
 These trees are also "honest", as the algorithm splits the data in two differnt subsamples: one for splitting the data ("splitting subsample") into different leaves, or final nodes. The other part of the data is droped down the tree until it falls into a leaf ("estimating subsample"). Then, we can estimate the difference in outcome between the mean of the treatment and the mean of the "control" cases. This prevents our causal tree from producing overfitting.
 
-Actually, it has been proved by Athey (one of the biggest contributors on the construction of this kind of trees) tht these treatment effect estimates are asymptotically normal. In other words, as the sample size grows, the treatment effect estimate is normally distributed. This is very useful, as we can estimate the variance of the estimation and build 95% confidence intervals.
+Actually, it has been [proved by Susan Athey and Stefan Wager](https://www.gsb.stanford.edu/faculty-research/working-papers/estimating-treatment-effects-causal-forests-application) (two of the biggest contributors on the construction of this kind of trees) tht these treatment effect estimates are asymptotically normal. In other words, as the sample size grows, the treatment effect estimate is normally distributed. This is very useful, as we can estimate the variance of the estimation and build 95% confidence intervals.
 The causal forest function has three primary inputs: X will be a matrix of covariates which we are using to predict the heterogeneity in treatment effects(age, dosage, Happy_Sad_group). Y is a vector of the outcome of interest (dif in memory), and W (drug) is the treatment assigment. 
 
 
-# Causal forest
+# Results (A-1)
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3.5, fig.width=12}
 # full dataset
