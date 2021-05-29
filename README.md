@@ -1,4 +1,4 @@
-# UC3MPerspectivesOnStatistics
+# Perspectives on statistics (UC3M)
 
 Homeworks and projects done for our perspectives on statistics class taken at UC3M
 
